@@ -13,6 +13,8 @@ import time as tim
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from copy import deepcopy
+
 
 matrizcsv = np.genfromtxt("./csv/originales/deltas_5m.csv", delimiter=",")
 movimientos = np.delete(matrizcsv, 0, 0)
@@ -242,118 +244,100 @@ def busqueda_local(solucion):
     return mejor_solucion
 
 
-def genera_nueva_poblacion(elite):
+def genera_nueva_poblacion(elite,alpha):
     nueva_poblacion = elite.copy()
-    for x in range(0, 15):
-        nueva_poblacion.append(randomlist(16, 220))
+    for x in range(0, 25):
+        aleatorio = randomlist(16, 220)
+
+        nueva_poblacion.append(list([coste(aleatorio, alpha), aleatorio]))
     return nueva_poblacion
 
 
 def genera_poblacion_inicial(alpha):
     nueva_poblacion = []
-    for x in range(0, 25):
+    for x in range(0, 30):
         aleatorio = randomlist(16, 220)
 
         nueva_poblacion.append(list([coste(aleatorio, alpha), aleatorio]))
-    nueva_poblacion.sort()
+    # nueva_poblacion.sort()
     return nueva_poblacion
 
+def distancia_hamming(padre,madre):
+    distancia=0
+    indices=[]
+    for i,(p,m) in enumerate(zip(padre,madre)):
+        if p!=m:
+            distancia+=1
+            indices.append(i)
+    return indices,distancia
+def iguales(poblacion,nueva_poblaicon):
+    iguales=True
+    for p,np in zip(poblacion,nueva_poblaicon):
+        if p[0]!=np[0]:
+            iguales=False
+    return iguales
 
-# aleatorio = randomlist(16, 220)
-# elite=[]
-# elite.append((1300,aleatorio))
-# elite.append((coste(aleatorio),randomlist(16, 220)))
-# elite.append((301,randomlist(16, 220)))
-# elite.append((233,randomlist(16, 220)))
-# elite.sort()
-# seleccion=elite[0:2]
-# print(seleccion[0][1])
+def mutacion_gaussiana(slot):
+    modificacion=np.ceil(random.gauss(0,2))
+    if modificacion==0:
+        modificacion=1
+    if(slot+modificacion<0):
+        modificacion=abs(modificacion)
+    slot+=modificacion
+    return  slot
+# print(mutacion_gaussiana(5))
+def cruce_chc(padre,madre,indicies,distancia_hamming_padres):
+    mutaciones_hijo=np.floor(distancia_hamming_padres/2)
+    hijo=padre.copy()
+    hija=madre.copy()
+    x=0
+    for i in indicies:
 
-def generar_greedy(sol_act):
-    s_ini = sol_act.copy()
-    proporcion = np.array(sol_act).sum()
-    for indice, elem in enumerate(s_ini):
-        s_ini[indice] = np.round((elem * 220) / proporcion)
-    return s_ini
+        if x % 2 ==0:
+            hijo[i]=mutacion_gaussiana(madre[i])
+        else:
+            hija[i]=mutacion_gaussiana(padre[i])
+        x+=1
+    return hijo,hija
+def chc(tiempo,alpha):
+    poblacion=genera_poblacion_inicial(alpha)
+    distancia_umbral=4
+    inicio=tim.time()
+    reinicios=0
 
-
-def cruce(padre, madre):
-    numeros = np.arange(0, 15)
-    posiciones = choices(numeros, k=6)
-    hijo = padre.copy()
-    hija = madre.copy()
-    print(posiciones)
-    for pos in posiciones:
-        hija[pos] = padre[pos]
-        hijo[pos] = madre[pos]
-    return hijo, hija
-
-
-    return hijo, hija
-
-def mutacion(hijo):
-    hijo[randint(0,15)]=randint(5,35)
-    hijo[randint(0,15)]=randint(5,35)
-    if(hijo.sum()<205):
-        hijo[randint(0,15)] += 205-hijo.sum()
-    # hijo[randint(0,15)]=randint(5,35)
-
-    return hijo
-
-def genetico_basico(tiempo, alpha):
-    poblacion = genera_poblacion_inicial(alpha)
-    elite = poblacion[0:4]
-
-    inicio = tim.time()
-    iteracion=0
-    while (tim.time() - inicio) < tiempo:
+    while tim.time()-inicio<tiempo:
         print(tim.time() - inicio)
-        numeros = np.arange(0, 20)
-        pesos = list(range(50, 10, -2))
-        for i in range(0, 10):
-            posiciones = choices(numeros, weights=pesos, k=2)
-            hijo, hija = cruce(poblacion[posiciones[0]][1], poblacion[posiciones[1]][1])
-            hijo=mutacion(hijo)
-            hija=mutacion(hija)
-            if (np.array(hijo).sum() < 205):
-                poblacion[i + 5][0] = 1000
-            else:
-                poblacion[i + 5][0] = coste(hijo, alpha)
-            poblacion[i + 5][1] = hijo
-            if (np.array(hijo).sum() < 205):
-                poblacion[24 - i][0] = 1000
-            else:
-                poblacion[24 - i][0] = coste(hija, alpha)
-            poblacion[24 - i][1] = hija
-        # poblacion.sort()
-        # poblacion = sorted(poblacion.any())
-        poblacion = sorted(poblacion, key=lambda x: (x[0]))
+        if(distancia_umbral==0):
+            reinicios+=1
+            poblacion=deepcopy(genera_nueva_poblacion(deepcopy(poblacion[0:5]),alpha))
+            distancia_umbral=4
+        random.shuffle(poblacion)
+        nueva_poblacion=deepcopy(poblacion)
+        for i in range(0,15):
+            # print(len(poblacion))
+            indices,distancia_hamming_padres=distancia_hamming(poblacion[i][1].tolist(), poblacion[29 - i][1].tolist())
+            if(distancia_hamming_padres>distancia_umbral):
+                hijo,hija=cruce_chc(poblacion[i][1],poblacion[29-i][1],indices,distancia_hamming_padres)
+                if(hijo.sum()<205):
+                    nueva_poblacion.append(list([1000,hijo]))
+                else:
+                    nueva_poblacion.append(list([coste(hijo,alpha), hijo]))
+                if(hija.sum()<205):
+                    nueva_poblacion.append(list([1000,hija]))
+                else:
+                    nueva_poblacion.append(list([coste(hija,alpha), hija]))
+        nueva_poblacion = sorted(nueva_poblacion, key=lambda x: (x[0]))
+        # print(distancia_umbral)
+        poblacion=deepcopy(nueva_poblacion[0:30])
+        if iguales(nueva_poblacion,poblacion):
+            distancia_umbral-=1
 
-        elite = poblacion[0:4]
-        plt.axis([0, tiempo, 0, 500])
+    km=poblacion[0][0]-(poblacion[0][1].sum()-205)*alpha
+    resultado="fitness: "+str(poblacion[0][0])+"  km: "+str(km)+"  slots: "+str(poblacion[0][1].sum())+"  reinicios: "+str(reinicios)+"  solucion: "+str(poblacion[0][1])
+    return resultado
 
-        y = (poblacion[0][0]-((poblacion[0][1].sum()-205)*alpha))
-        y2=poblacion[0][1].sum()
-        plt.plot(tim.time() - inicio, y,'co')
-        plt.plot(tim.time() - inicio, y2,'ro')
-        plt.legend(['km', 'slots'])
-
-        # plt.plot(tim.time() - inicio, y2,'ro')
-
-        plt.pause(1)
-
-    plt.show()
+print(chc(30,6))
 
 
 
-    return poblacion[0][0], np.array(poblacion[0][1])
 
-alpha=6
-costeresultado, solucion = genetico_basico(30, alpha)
-print("km ",costeresultado-((solucion.sum()-205)*alpha), "    num slots ", solucion.sum())
-# actual = randomlist(16, 220)
-# actual2= randomlist(16, 220)
-# hijo,hija=cruce(actual,actual2)
-# print(actual,"   Padres   " ,actual2)
-# print(hijo,"   hijos   " ,hija)
-# print(hijo.sum(),"   hijos   " ,hija.sum())
