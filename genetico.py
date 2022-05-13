@@ -282,7 +282,6 @@ def cruce(padre, madre):
     posiciones = choices(numeros, k=6)
     hijo = padre.copy()
     hija = madre.copy()
-    print(posiciones)
     for pos in posiciones:
         hija[pos] = padre[pos]
         hijo[pos] = madre[pos]
@@ -331,12 +330,12 @@ def genetico_basico(tiempo, alpha):
 
         elite = poblacion[0:4]
         plt.axis([0, tiempo, 0, 500])
-
         y = (poblacion[0][0]-((poblacion[0][1].sum()-205)*alpha))
         y2=poblacion[0][1].sum()
         plt.plot(tim.time() - inicio, y,'co')
         plt.plot(tim.time() - inicio, y2,'ro')
         plt.legend(['km', 'slots'])
+        plt.title('Genetico Basico')
 
         # plt.plot(tim.time() - inicio, y2,'ro')
 
@@ -351,9 +350,3 @@ def genetico_basico(tiempo, alpha):
 alpha=6
 costeresultado, solucion = genetico_basico(30, alpha)
 print("km ",costeresultado-((solucion.sum()-205)*alpha), "    num slots ", solucion.sum())
-# actual = randomlist(16, 220)
-# actual2= randomlist(16, 220)
-# hijo,hija=cruce(actual,actual2)
-# print(actual,"   Padres   " ,actual2)
-# print(hijo,"   hijos   " ,hija)
-# print(hijo.sum(),"   hijos   " ,hija.sum())
