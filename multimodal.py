@@ -346,12 +346,13 @@ def clearing(poblacion,radio,kappa):
 
 
 def genetico_multimodal(tiempo, alpha,radio,kappa):
-    random.seed(1243412)
-    np.random.seed(1243412)
+    random.seed(8721947)
+    np.random.seed(8721947)
+
     poblacion = genera_poblacion_inicial(alpha)
 
     elite = poblacion[0:4]
-
+    num_evaluaciones=30
     inicio = tim.time()
     iteracion = 0
     while (tim.time() - inicio) < tiempo:
@@ -366,6 +367,7 @@ def genetico_multimodal(tiempo, alpha,radio,kappa):
                 hijo, hija = cruce(poblacion[posiciones[0]][1], poblacion[posiciones[1]][1])
                 hijo = mutacion(hijo)
                 hija = mutacion(hija)
+                num_evaluaciones+=2
             else:
                 hijo=poblacion[posiciones[0]][1]
                 hija=poblacion[posiciones[1]][1]
@@ -403,7 +405,6 @@ def genetico_multimodal(tiempo, alpha,radio,kappa):
             poblacion = sorted(poblacion, key=lambda x: (x[0]))
             poblacion = poblacion[0:ultima]
         iteracion += 1
-        print(len(poblacion))
 
         plt.axis([0, tiempo, 0, 500])
 
@@ -422,8 +423,8 @@ def genetico_multimodal(tiempo, alpha,radio,kappa):
     km = poblacion[0][0] - (poblacion[0][1].sum() - 205) * alpha
     resultado = "fitness: " + str(poblacion[0][0]) + "  km: " + str(km) + "  slots: " + str(
         poblacion[0][1].sum()) + "  solucion: " + str(poblacion[0][1])
-
+    print("numero de evaluaciones: ",num_evaluaciones)
     return resultado
 
 
-print(genetico_multimodal(50, 4.5,4,2))
+print(genetico_multimodal(40, 4.5,4,2))

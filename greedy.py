@@ -1,5 +1,4 @@
 import math
-import random
 from builtins import print
 
 import numpy as np
@@ -139,6 +138,7 @@ def ejecutar_accion(accion, estacion, capacidadEstaciones, huecosLibres, bicisEs
             j += 1
     return km
 
+
 def coste(solucion_actual, alpha):
     capacidadEstaciones = solucion_actual.copy()
     huecosLibres = capacidadEstaciones.copy()
@@ -152,155 +152,17 @@ def coste(solucion_actual, alpha):
     kmaux = kmaux + (np.array(capacidadEstaciones).sum() - 205) * alpha
     return kmaux
 
-# def coste(solucion_actual):
-#     capacidadEstaciones = solucion_actual.copy()
-#     huecosLibres = capacidadEstaciones.copy()
-#     bicisEstacion = np.array(capacidadEstaciones - huecosLibres)
-#     kmaux = 0
-#     for x in range(0, 16):
-#         ejecutar_accion(movInicial[x], x, capacidadEstaciones, huecosLibres, bicisEstacion)
-#
-#     for elem in lista_mov:
-#         kmaux += ejecutar_accion(elem[1], elem[0], capacidadEstaciones, huecosLibres, bicisEstacion)
-#
-#     return kmaux
 
-
-def genera_vecino_local(solucion_inicial, limite_vecinos, n, offset):
-    solucion_actual = solucion_inicial.copy()
-    permutaciones = list(permutations(np.arange(0, solucion_actual.shape[0]), 2))
-    i = 0
-    vecinos = []
-    num_vecinos = 0
-    long = len(permutaciones)
-    # offset=randint(0,len(permutaciones))
-    for x in range(offset, len(permutaciones) + offset):
-        y = x % long
-        if num_vecinos < limite_vecinos:
-            if solucion_actual[permutaciones[y][1]] > n:
-                sol_aux = solucion_actual.copy()
-                sol_aux[permutaciones[y][0]] += n
-                sol_aux[permutaciones[y][1]] -= n
-                num_vecinos += 1
-                vecinos.append(sol_aux.copy())
-        else:
-            break
-    return vecinos
-
-
-def mejor_coste(vecinos,alpha):
-    minimo = math.inf
-    for v in vecinos:
-        if coste(v,alpha) < minimo:
-            minimo = coste(v,alpha)
-            vecino = v
-    return vecino
-
-
-def busqueda_local(solucion,alpha):
-    inicio3 = tim.time()
-    # genero la solucion inicial
-    solucion_inicial = solucion
-    # asigno la solucion inicial a la actual
-    solucion_actual = solucion_inicial.copy()
-    # asigno la solucion inicial a la solucion mejor
-    mejor_solucion = solucion_actual.copy()
-    i = 0
-    mejora = True
-    contador_mejora = 0
-    offset = offset = randint(0, 240)
-    tam_lote = 20
-    num_vecinos = 240
-    contador_costes = 0
-    num_evaluaciones=0
-    # print("la solucion inicial es: ", solucion_inicial)
-    while i < 3000 and mejora:
-
-        solucion_actual = mejor_coste(genera_vecino_local(solucion_actual, tam_lote, 2, offset),alpha)
-        offset += tam_lote
-        num_evaluaciones+=tam_lote
-
-        num_vecinos -= tam_lote
-        contador_costes += 2
-        if (coste(solucion_actual,alpha) < coste(mejor_solucion,alpha)):
-            mejor_solucion = solucion_actual.copy()
-            contador_mejora += 1
-            num_vecinos = 240
-        if num_vecinos == 0:
-            mejora = False
-        i += 1
-
-    # print("contador mejoras local:", contador_mejora)
-    # print("contador costes ", contador_costes)
-    # print(mejor_solucion)
-    # print("el tiempo de ", tim.time() - inicio3)
-    return mejor_solucion,num_evaluaciones
-
-def genera_vecino_vns(sub_vector,k):
-    x=0
-    while x<k:
-
-        posicion=randint(0,len(sub_vector))
-        posicion2=randint(0,len(sub_vector))
-        #comprobar q  sean distintos y cambiar los valores
-
-def mutacion(s_ini,k):
-    k=k*4
-
-    # posicion=randint(0,len(s_ini)-1)
-    posicion=15
-    posiciones=[]
-    sub_vector=[]
-
-    for x in range(0,k):
-        pos=posicion % 16
-        posiciones.append(pos)
-        sub_vector.append(s_ini[pos])
-        posicion+=1
-    mutacion=genera_vecino_vns(sub_vector)
-    j=0
-    for valor in mutacion:
-        s_ini[posiciones[j]]=valor
-        j+=1
+def generar_greedy(sol_act):
+    s_ini = sol_act.copy()
+    for indice, elem in enumerate(s_ini):
+        s_ini[indice] = np.round((elem * 220) / 163)
     return s_ini
-def genera_vecino_vns(lista):
-    r=randint(0,len(lista)-1)
-    r2=randint(0,len(lista)-1)
-    if (lista[r] > 0):
-        lista[r]-=2
-        lista[r2]+=2
-    else:
-        lista[r2]-=2
-        lista[r]+=2
-    return lista
 
-def vns(alpha):
-    random.seed(8721947)
-    np.random.seed(8721947)
 
-    solucion = randomlist(16, 220)
-    k = 1
-    kmax = 4
-    s_mejor = solucion.copy()
-    coste_mejor = coste(s_mejor,alpha)
-    s_mutacion=solucion.copy()
-    num_evaluaciones=0
-    while (k <= kmax):
-        s_local,num_ev = busqueda_local(s_mutacion,alpha)
-        num_evaluaciones+=num_ev
-        coste_local = coste(s_local,alpha)
-        if coste_local < coste_mejor:
-            s_mejor = s_local
-            coste_mejor = coste_local
-            k = 1
-        else:
-            k += 1
-        s_mutacion=mutacion(s_mejor,k)
-    print("el numero de evaluaciones es: ",num_evaluaciones)
-    return s_mejor
-
-alpha=4.5
-actual = randomlist(16, 220)
-resultado = vns(alpha)
-print("el resultado de local es : ", resultado,"  ",resultado.sum())
-print("el fitnees es: ", coste(resultado,alpha))
+inicio3 = tim.time()
+greedy = generar_greedy(movInicial)
+print(greedy.sum())
+# print("la solucion greedy es: ", greedy)
+print("el fitness es: ",coste(greedy,alpha=4.5))
+print("el tiempo de ", tim.time() - inicio3)

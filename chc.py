@@ -300,16 +300,22 @@ def cruce_chc(padre,madre,indicies,distancia_hamming_padres):
         x+=1
     return hijo,hija
 def chc(tiempo,alpha):
+    random.seed(4531333)
+    np.random.seed(4531333)
+
     poblacion=genera_poblacion_inicial(alpha)
     distancia_umbral=4
     inicio=tim.time()
     reinicios=0
+    num_evaluaciones=30
 
     while tim.time()-inicio<tiempo:
         print(tim.time() - inicio)
+        num_evaluaciones+=25
         if(distancia_umbral==0):
             reinicios+=1
             poblacion=deepcopy(genera_nueva_poblacion(deepcopy(poblacion[0:5]),alpha))
+            num_evaluaciones+=25
             distancia_umbral=4
         random.shuffle(poblacion)
         nueva_poblacion=deepcopy(poblacion)
@@ -331,12 +337,25 @@ def chc(tiempo,alpha):
         poblacion=deepcopy(nueva_poblacion[0:30])
         if iguales(nueva_poblacion,poblacion):
             distancia_umbral-=1
+        plt.axis([0, tiempo, 0, 500])
+        y = (poblacion[0][0]-((poblacion[0][1].sum()-205)*alpha))
+        y2=poblacion[0][1].sum()
+        plt.plot(tim.time() - inicio, y,'co')
+        plt.plot(tim.time() - inicio, y2,'ro')
+        plt.legend(['km', 'slots'])
+        plt.title('Genetico CHC')
 
+        # plt.plot(tim.time() - inicio, y2,'ro')
+
+        plt.pause(1)
+
+    plt.show()
+    print("numero de evaluaciones: ",num_evaluaciones)
     km=poblacion[0][0]-(poblacion[0][1].sum()-205)*alpha
     resultado="fitness: "+str(poblacion[0][0])+"  km: "+str(km)+"  slots: "+str(poblacion[0][1].sum())+"  reinicios: "+str(reinicios)+"  solucion: "+str(poblacion[0][1])
     return resultado
 
-print(chc(30,6))
+print(chc(40,4.5))
 
 
 

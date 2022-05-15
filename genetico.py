@@ -235,10 +235,6 @@ def busqueda_local(solucion):
             mejora = False
         i += 1
 
-    # print("contador mejoras local:", contador_mejora)
-    # print("contador costes ", contador_costes)
-    # print(mejor_solucion)
-    # print("el tiempo de ", tim.time() - inicio3)
     return mejor_solucion
 
 
@@ -252,22 +248,15 @@ def genera_nueva_poblacion(elite):
 def genera_poblacion_inicial(alpha):
     nueva_poblacion = []
     for x in range(0, 25):
-        aleatorio = randomlist(16, 220)
+        tam=randint(205,235)
+        aleatorio = randomlist(16, tam)
 
         nueva_poblacion.append(list([coste(aleatorio, alpha), aleatorio]))
     nueva_poblacion.sort()
     return nueva_poblacion
 
 
-# aleatorio = randomlist(16, 220)
-# elite=[]
-# elite.append((1300,aleatorio))
-# elite.append((coste(aleatorio),randomlist(16, 220)))
-# elite.append((301,randomlist(16, 220)))
-# elite.append((233,randomlist(16, 220)))
-# elite.sort()
-# seleccion=elite[0:2]
-# print(seleccion[0][1])
+
 
 def generar_greedy(sol_act):
     s_ini = sol_act.copy()
@@ -291,17 +280,26 @@ def cruce(padre, madre):
     return hijo, hija
 
 def mutacion(hijo):
-    hijo[randint(0,15)]=randint(5,35)
-    hijo[randint(0,15)]=randint(5,35)
-    if(hijo.sum()<205):
-        hijo[randint(0,15)] += 205-hijo.sum()
-    # hijo[randint(0,15)]=randint(5,35)
+    modificacion=np.ceil(random.gauss(0,2))
+    modificacion2=np.ceil(random.gauss(0,2))
+    pos1=randint(0,15)
+    pos2=randint(0,15)
+
+    if(hijo[pos1]+modificacion <0):
+        modificacion=abs(modificacion)
+    hijo[pos1]+=modificacion
+    if hijo[pos2]+modificacion2 <0:
+        modificacion2=abs(modificacion2)
+    hijo[pos2]+=modificacion2
 
     return hijo
 
 def genetico_basico(tiempo, alpha):
+    random.seed(7593102)
+    np.random.seed(7593102)
     poblacion = genera_poblacion_inicial(alpha)
     elite = poblacion[0:4]
+    num_evaluaciones=30
 
     inicio = tim.time()
     iteracion=0
@@ -319,7 +317,7 @@ def genetico_basico(tiempo, alpha):
             else:
                 poblacion[i + 5][0] = coste(hijo, alpha)
             poblacion[i + 5][1] = hijo
-            if (np.array(hijo).sum() < 205):
+            if (np.array(hija).sum() < 205):
                 poblacion[24 - i][0] = 1000
             else:
                 poblacion[24 - i][0] = coste(hija, alpha)
@@ -327,7 +325,7 @@ def genetico_basico(tiempo, alpha):
         # poblacion.sort()
         # poblacion = sorted(poblacion.any())
         poblacion = sorted(poblacion, key=lambda x: (x[0]))
-
+        num_evaluaciones+=20
         elite = poblacion[0:4]
         plt.axis([0, tiempo, 0, 500])
         y = (poblacion[0][0]-((poblacion[0][1].sum()-205)*alpha))
@@ -344,9 +342,9 @@ def genetico_basico(tiempo, alpha):
     plt.show()
 
 
-
+    print("Numero de evaluaciones: ",num_evaluaciones)
     return poblacion[0][0], np.array(poblacion[0][1])
 
-alpha=6
-costeresultado, solucion = genetico_basico(30, alpha)
-print("km ",costeresultado-((solucion.sum()-205)*alpha), "    num slots ", solucion.sum())
+alpha=4.5
+costeresultado, solucion = genetico_basico(400, alpha)
+print("fitness",costeresultado,"km ",costeresultado-((solucion.sum()-205)*alpha), "    num slots ", solucion.sum())
